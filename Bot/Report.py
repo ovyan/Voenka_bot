@@ -1,5 +1,6 @@
 import pandas as pd
 import Database
+import datetime
 
 
 async def create_report():
@@ -8,7 +9,7 @@ async def create_report():
     groups = []
     dates = []
     for elem in att_list:
-        date = str(elem[1]) + '.' + str(elem[2]) + '.' + str(elem[3])
+        date = str(elem[1]).zfill(2) + '.' + str(elem[2]).zfill(2) + '.' + str(elem[3])
         dates.append(date)
         fio = elem[4]
         fios.append(fio)
@@ -20,12 +21,13 @@ async def create_report():
     df['Взвод'] = groups
     for elem in att_list:
         did_attend = elem[0]
-        date = str(elem[1]) + '.' + str(elem[2]) + '.' + str(elem[3])
+        date = str(elem[1]).zfill(2) + '.' + str(elem[2]).zfill(2) + '.' + str(elem[3])
         fio = elem[4]
         group = elem[5]
         df.loc[(df['ФИО'] == fio) & (df['Взвод'] == int(group)), date] = did_attend
-
-    df.to_excel("report.xlsx", index=False)
+    now = datetime.datetime.now()
+    day, month, year = now.day, now.month, now.year
+    df.to_excel(f"report_{day}_{month}_{year}.xlsx", index=False)
 
 if __name__ == "__main__":
     pass

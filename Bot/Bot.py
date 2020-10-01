@@ -20,7 +20,7 @@ import Database
 import Report
 from Distribution import send_morning_messages
 
-API_TOKEN = '1177540873:AAFinUzdAa5asNNb6Qu1DLhzPw-Uv31B4J4'
+API_TOKEN = '1177540873:AAFinUzdAa5asNNb6Qu1DLhzPw-Uv31B4J4'  # TODO: change token
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -39,12 +39,17 @@ class Form(StatesGroup):
 
 # TODO: call this at 8:46 AM
 async def create_report():
+    curr_day = datetime.datetime.today().weekday()
+    if curr_day < 2 or curr_day > 4:  # not voenka days
+        return
     await Report.create_report()
 
 
 # TODO: call this every day at 7 AM
 async def daily_attendance():
     curr_day = datetime.datetime.today().weekday()
+    if curr_day < 2 or curr_day > 4:  # not voenka days
+        return
     groups_by_day = {2: 19, 3: 20, 4: 18}
     await Database.daily_attendance(group=groups_by_day[curr_day], date=datetime.datetime.now())
     await send_morning_messages(date=datetime.datetime.now())
@@ -56,8 +61,8 @@ async def is_time_correct(group: int):
     min_time = 7 * 60  # 7 AM
     max_time = 8 * 60 + 46  # 8:46 AM
     curr_time = msk_now.hour * 60 + msk_now.minute
-    # if curr_time < min_time or curr_time >= max_time:
-    #     return False
+    if curr_time < min_time or curr_time >= max_time:
+        return False
 
     group //= 100
     # mon==0, wed==2 and etc
@@ -103,9 +108,9 @@ async def check_attendance(message: types.Message):
     str_to_send = ''
     for elem in att_list:
         if elem[0]:
-            str_to_send += f"{elem[1]}.{elem[2]}.{elem[3]} ✅\n"
+            str_to_send += "{:02}.{:02}.{:02} ✅\n".format(elem[1], elem[2], elem[3])
         else:
-            str_to_send += f"{elem[1]}.{elem[2]}.{elem[3]} ❌\n"
+            str_to_send += "{:02}.{:02}.{:02} ❌\n".format(elem[1], elem[2], elem[3])
 
     if str_to_send == '':
         str_to_send = 'У тебя еще нет данных о посещениях'
@@ -221,6 +226,7 @@ async def process_fio(message: types.Message, state: FSMContext):
 
 @dp.message_handler(commands='start', state='*')
 async def cmd_start(message: types.Message):
+    await create_report()
     await message.answer("Здравия желаю, товарищ!")
     try:
         user_id = message.chat.id
@@ -243,7 +249,10 @@ async def cmd_start(message: types.Message):
 
 if __name__ == '__main__':
     # Run pipeline once a day
-    # scheduler = AsyncIOScheduler()
-    # scheduler.add_job(close_attendance, 'cron', hour=12, minute=0, second=0) # TODO: set msk 7 AM
-    # scheduler.start()
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(daily_attendance, 'cron', hour=7, minute=0,
+                      second=0, timezone="Europe/Moscow")  # msk 7 AM
+    scheduler.add_job(create_report, 'cron', hour=8, minute=50, second=0,
+                      timezone="Europe/Moscow")  # msk 8:50 AM
+    scheduler.start()
     executor.start_polling(dp, skip_updates=True)

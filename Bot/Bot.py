@@ -37,12 +37,12 @@ class Form(StatesGroup):
     group_registration = State()
 
 
-# TODO: call this at 8:46 AM
+# TODO: call this at 8:50 AM
 async def create_report():
     curr_day = datetime.datetime.today().weekday()
     if curr_day < 2 or curr_day > 4:  # not voenka days
         return
-    await Report.create_report()
+    await Report.create_report()  # TODO: create report only for today's year
 
 
 # TODO: call this every day at 7 AM
@@ -86,7 +86,10 @@ async def attend(message: types.Message):
             if await Database.did_attend_onday(user_id, datetime.datetime.now()):
                 await message.answer("Ты сегодня уже отметился.")
             else:
-                await Database.add_attendance(user_id, fio, group, datetime.datetime.now())
+                if await Database.is_in_attendance_db(user_id, datetime.datetime.now()):
+                    await Database.update_attendance(user_id, fio, group, datetime.datetime.now())
+                else:
+                    await Database.add_attendance(user_id, fio, group, datetime.datetime.now())
                 await message.answer("Молодец, ты отметился.")
         else:
             await message.answer("Отметиться можно только в свой военный день с 7:00 до 8:45")
@@ -113,7 +116,7 @@ async def check_attendance(message: types.Message):
             str_to_send += "{:02}.{:02}.{:02} ❌\n".format(elem[1], elem[2], elem[3])
 
     if str_to_send == '':
-        str_to_send = 'У тебя еще нет данных о посещениях'
+        str_to_send = 'У тебя еще нет данных о посещениях.'
 
     await message.answer(text=str_to_send)
 
@@ -173,7 +176,7 @@ async def get_data(message: types.Message):
 
 @dp.message_handler(Text(equals='Обратная связь', ignore_case=True))
 async def contact(message: types.Message):
-    await message.answer("Для обратной связи пиши: @th3luck")
+    await message.answer("Для обратной связи пиши товарищу @th3luck")
 
 
 @dp.message_handler(state=Form.group_registration)
@@ -187,6 +190,9 @@ async def process_group(message: types.Message, state: FSMContext):
     try:
         # TODO: check if group really exists
         group_num = int(message.text)
+        if group_num < 1800 or group_num > 2015:
+            await message.answer("Неверный номер взвода")
+            return
         async with state.proxy() as data:
             data['group_num'] = group_num
     except:
@@ -226,7 +232,6 @@ async def process_fio(message: types.Message, state: FSMContext):
 
 @dp.message_handler(commands='start', state='*')
 async def cmd_start(message: types.Message):
-    await create_report()
     await message.answer("Здравия желаю, товарищ!")
     try:
         user_id = message.chat.id

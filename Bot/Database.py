@@ -35,9 +35,27 @@ async def get_user_group(user_id: int) -> str:
 
 async def add_attendance(user_id: int, fio: str, group_num: int, date):
     async with aiosqlite.connect("voenka_bot.db") as db:
+        await db.execute("INSERT INTO cold_attendance (fio, group_num, tg_id, day, month, year, did_attend) VALUES (?, ?, ?, ?, ?, ?, 1)",
+                         [fio, group_num, user_id, date.day, date.month, date.year])
+        await db.commit()
+
+
+async def update_attendance(user_id: int, fio: str, group_num: int, date):
+    async with aiosqlite.connect("voenka_bot.db") as db:
         await db.execute("UPDATE cold_attendance SET did_attend=1 WHERE tg_id=? and day=? and month=? and year=?",
                          [user_id, date.day, date.month, date.year])
         await db.commit()
+
+
+async def is_in_attendance_db(user_id: int, date) -> bool:
+    async with aiosqlite.connect("voenka_bot.db") as db:
+        async with db.execute("SELECT tg_id FROM cold_attendance WHERE tg_id=? and day=? and month=? and year=?",
+                              [user_id, date.day, date.month, date.year]) as cursor:
+            res = await cursor.fetchone()
+            if res:
+                return True
+            else:
+                return False
 
 
 async def did_attend_onday(user_id: int, date) -> bool:
@@ -58,7 +76,7 @@ async def get_attendance(user_id: int) -> list:
             if res:
                 return res
             else:
-                return None
+                return []
 
 
 async def daily_attendance(group: int, date):

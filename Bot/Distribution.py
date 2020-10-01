@@ -12,7 +12,7 @@ async def pool_task(row):
 
 async def send_morning_messages(date):
     async with aiosqlite.connect("voenka_bot.db") as db:
-        async with db.execute("SELECT tg_id FROM cold_attendance WHERE did_attend=1 and day=? and month=? and year=?",
+        async with db.execute("SELECT tg_id FROM cold_attendance WHERE did_attend=0 and day=? and month=? and year=?",
                               [date.day, date.month, date.year]) as cursor:
             rows = await cursor.fetchall()
             await asyncio.gather(*[pool_task(row) for row in rows])

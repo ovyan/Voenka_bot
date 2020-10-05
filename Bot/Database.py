@@ -93,7 +93,7 @@ async def get_all_attendance() -> list:
             if res:
                 return res
             else:
-                return None
+                return []
 
 if __name__ == "__main__":
     pass

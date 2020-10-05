@@ -13,7 +13,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.types import ParseMode
+from aiogram.types import ParseMode, InputFile
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import Database
@@ -37,15 +37,20 @@ class Form(StatesGroup):
     group_registration = State()
 
 
-# TODO: call this at 8:50 AM
+# call this at 8:50 AM
 async def create_report():
+    print("Creating report")
     curr_day = datetime.datetime.today().weekday()
     if curr_day < 2 or curr_day > 4:  # not voenka days
         return
-    await Report.create_report()  # TODO: create report only for today's year
+    groups_by_day = {2: 19, 3: 20, 4: 18}
+    rep_url = await Report.create_report(short_group=groups_by_day[curr_day])
+    # TODO: add salnikov chat_id
+    await bot.send_document(chat_id=8317354, document=InputFile(rep_url))
+    print("Report sent")
 
 
-# TODO: call this every day at 7 AM
+# call this every day at 7 AM
 async def daily_attendance():
     curr_day = datetime.datetime.today().weekday()
     if curr_day < 2 or curr_day > 4:  # not voenka days

@@ -37,7 +37,7 @@ class Form(StatesGroup):
     group_registration = State()
 
 
-# call this at 8:50 AM
+# call this at 8:41 AM
 async def create_report():
     print("Creating report")
     curr_day = datetime.datetime.today().weekday()
@@ -46,8 +46,12 @@ async def create_report():
     groups_by_day = {2: 19, 3: 20, 4: 18}
     rep_url = await Report.create_report(short_group=groups_by_day[curr_day])
     # TODO: add salnikov chat_id
-    await bot.send_document(chat_id=8317354, document=InputFile(rep_url))
-    print("Report sent")
+    try:
+        await bot.send_document(chat_id=8317354, document=InputFile(rep_url))
+        await bot.send_document(chat_id=175327958, document=InputFile(rep_url))
+        print("Report sent")
+    except:
+        print("Could not send the report")
 
 
 # call this every day at 7 AM
@@ -64,7 +68,7 @@ async def is_time_correct(group: int):
     tz = pytz.timezone('Europe/Moscow')  # getting current Moscow time
     msk_now = datetime.datetime.now(tz)
     min_time = 7 * 60  # 7 AM
-    max_time = 8 * 60 + 46  # 8:46 AM
+    max_time = 8 * 60 + 40  # 8:40 AM
     curr_time = msk_now.hour * 60 + msk_now.minute
     if curr_time < min_time or curr_time >= max_time:
         return False
@@ -97,7 +101,7 @@ async def attend(message: types.Message):
                     await Database.add_attendance(user_id, fio, group, datetime.datetime.now())
                 await message.answer("Молодец, ты отметился.")
         else:
-            await message.answer("Отметиться можно только в свой военный день с 7:00 до 8:45")
+            await message.answer("Отметиться можно только в свой военный день с 7:00 до 8:40")
     else:
         await message.answer("Ошибка в номере взвода.")
         return
@@ -262,7 +266,7 @@ if __name__ == '__main__':
     scheduler = AsyncIOScheduler()
     scheduler.add_job(daily_attendance, 'cron', hour=7, minute=0,
                       second=0, timezone="Europe/Moscow")  # msk 7 AM
-    scheduler.add_job(create_report, 'cron', hour=8, minute=50, second=0,
-                      timezone="Europe/Moscow")  # msk 8:50 AM
+    scheduler.add_job(create_report, 'cron', hour=8, minute=41, second=0,
+                      timezone="Europe/Moscow")  # msk 8:41 AM
     scheduler.start()
     executor.start_polling(dp, skip_updates=True)

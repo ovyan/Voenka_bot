@@ -4,3 +4,4 @@ aiosqlite
 APScheduler
 pandas
 openpyxl
+xlsxwriter

@@ -20,7 +20,8 @@ import Database
 import Report
 from Distribution import send_morning_messages
 
-API_TOKEN = '1177540873:AAFinUzdAa5asNNb6Qu1DLhzPw-Uv31B4J4'  # TODO: change token
+# API_TOKEN = '1177540873:AAFinUzdAa5asNNb6Qu1DLhzPw-Uv31B4J4'  # TODO: change token
+API_TOKEN = '1263120048:AAGGTZEEtsrJBsH0boIF4qPtqx-uryn7pNg'
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -35,6 +36,16 @@ dp = Dispatcher(bot, storage=storage)
 class Form(StatesGroup):
     fio_registration = State()
     group_registration = State()
+
+
+async def create_excel_rep():
+    curr_day = 2
+    groups_by_day = {2: 19, 3: 20, 4: 18}
+    excel_url = await Report.create_excel_report(short_group=groups_by_day[curr_day])
+    try:
+        await bot.send_document(chat_id=8317354, document=InputFile(excel_url))
+    except:
+        print("Could not send excel report")
 
 
 # call this at 8:41 AM
@@ -181,6 +192,13 @@ async def get_data(message: types.Message):
         await message.answer(f'Взвод: {group}')
     else:
         await message.answer('Ошибка в номере взвода')
+
+    # await create_excel_rep()  # TODO: delete
+
+
+@dp.message_handler(commands='test', state='*')  # TODO: change command name
+async def cmd_test(message: types.Message):
+    await create_excel_rep()
 
 
 @dp.message_handler(Text(equals='Обратная связь', ignore_case=True))

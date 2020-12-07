@@ -20,8 +20,7 @@ import Database
 import Report
 from Distribution import send_morning_messages
 
-# API_TOKEN = '1177540873:AAFinUzdAa5asNNb6Qu1DLhzPw-Uv31B4J4'  # TODO: change token
-API_TOKEN = '1263120048:AAGGTZEEtsrJBsH0boIF4qPtqx-uryn7pNg'
+API_TOKEN = 'supersecrettoken'
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
